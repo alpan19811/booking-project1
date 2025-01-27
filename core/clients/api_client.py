@@ -19,9 +19,10 @@ class APIClient:
 
         self.base_url = self.get_base_url(environment)
         self.session = requests.Session()
-        self.session.headers = {
-             'Content-Type': 'application/json'
-    }
+        self.session.headers.update({
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+    })
 
     def get_base_url(self, environment: Environment) -> str:
         if environment == Environment.TEST:
@@ -33,14 +34,14 @@ class APIClient:
 
     def get(self, endpoint, params=None, status_code=200):
         url = self.base_url + endpoint
-        response = requests.get(url, headers=self.headers, params=params)
+        response = requests.get(url, headers=self.session.headers, params=params)
         if status_code:
             assert response.status_code == status_code
         return response.json()
 
     def post(self, endpoint, data=None, status_code=200):
         url = self.base_url + endpoint
-        response = requests.get(url, headers=self.headers, json=data)
+        response = requests.post(url, headers=self.session.headers, json=data)
         if status_code:
             assert response.status_code == status_code
         return response.json()
@@ -66,18 +67,17 @@ class APIClient:
         with allure.step('Updating header with authorization'):
             self.session.headers.update({"Authorization": f"Bearer{token}"})
 
-    def get_booking_by_id(self, booking_id):  # Создаем метод, который принимает self и booking_id
-        with allure.step(f'Getting booking with ID {booking_id}'):  # Добавляем шаг для отчета Allure
-            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"  # Формируем URL для запроса
-            headers = {"Accept": "application/json"}  # Устанавливаем заголовок Accept, чтобы получать ответ в JSON
-            response = self.session.get(url, headers=headers, timeout=Timeouts.TIMEOUT.value)  # Выполняем GET-запрос
-            response.raise_for_status()  # Проверяем, что статус ответа 2xx (если нет — вызывается ошибка)
+    def get_booking_by_id(self, booking_id):
+        with allure.step(f'Getting booking with ID {booking_id}'):
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            response = self.session.get(url, timeout=Timeouts.TIMEOUT.value)
+            response.raise_for_status()
 
-        with allure.step('Checking status code'):  # Проверяем статус-код
+        with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
 
-        with allure.step('Returning booking data'):  # Последний шаг: возвращаем данные
-            return response.json()  # Возвращаем данные о бронировании в формате JSON
+        with allure.step('Returning booking data'):
+            return response.json()
 
     def delete_booking(self, booking_id):
         with allure.step('Deleting booking'):
@@ -110,11 +110,7 @@ class APIClient:
     def update_booking(self, booking_id, booking_data):
         with allure.step(f'Updating booking with ID {booking_id}'):
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
-            headers = {
-                "Content-Type": "application/json",
-                "Accept": "application/json"
-            }
-            response = self.session.put(url, json=booking_data, headers=headers)
+            response = self.session.put(url, json=booking_data)
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
