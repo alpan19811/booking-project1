@@ -65,7 +65,7 @@ class APIClient:
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
         token = response.json().get("token")
         with allure.step('Updating header with authorization'):
-            self.session.headers.update({"Authorization": f"Bearer{token}"})
+            self.session.headers.update({"Authorization": f"Bearer {token}"})
 
     def get_booking_by_id(self, booking_id):
         with allure.step(f'Getting booking with ID {booking_id}'):
@@ -79,10 +79,15 @@ class APIClient:
         with allure.step('Returning booking data'):
             return response.json()
 
-    def delete_booking(self, booking_id):
+    def delete_booking(self, booking_id, use_cookie=False, token=None):
         with allure.step('Deleting booking'):
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
-            response = self.session.delete(url, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD))
+            headers = {}
+            if use_cookie and token:
+                headers['Cookie'] = f'token={token}'
+            else:
+                headers['Authorization'] = 'Basic YWRtaW46cGFzc3dvcmQxMjM='
+            response = self.session.delete(url, headers=headers)
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 201, f"Expected status 201 but got {response.status_code}"
