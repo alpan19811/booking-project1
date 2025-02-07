@@ -57,15 +57,23 @@ class APIClient:
 
     def auth(self):
         with allure.step('Getting authenticate'):
-            url = f"{self.base_url}{Endpoints.AUTH_ENDPOINT}"
-            payload = {"username": Users.USERNAME, "password": Users.PASSWORD}
-            response = self.session.post(url, json=payload, timeout=Timeouts.TIMEOUT)
+            url = f"{self.base_url}/{Endpoints.AUTH_ENDPOINT.value}"
+            payload = {"username": Users.USERNAME.value, "password": Users.PASSWORD.value}
+
+            timeout_value = Timeouts.TIMEOUT.value
+
+            response = self.session.post(url, json=payload, timeout=timeout_value)
             response.raise_for_status()
-        with allure.step('Checking status code'):
-            assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
+
+        if response.status_code != 200:
+            raise ValueError(f"Failed to authenticate, status code: {response.status_code}")
+
         token = response.json().get("token")
-        with allure.step('Updating header with authorization'):
-            self.session.headers.update({"Authorization": f"Bearer {token}"})
+        if not token:
+            raise ValueError("Authentication failed: token not received")
+
+        self.session.headers.update({"Authorization": f"Bearer {token}"})
+        print(f"Token for authorization: {token}")
 
     def get_booking_by_id(self, booking_id):
         with allure.step(f'Getting booking with ID {booking_id}'):
@@ -79,15 +87,17 @@ class APIClient:
         with allure.step('Returning booking data'):
             return response.json()
 
-    def delete_booking(self, booking_id, use_cookie=False, token=None):
+    def delete_booking(self, booking_id, token=None):
         with allure.step('Deleting booking'):
-            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT.value}/{booking_id}"
+
+            print(f"Token for authorization: {token}")
+
             headers = {}
-            if use_cookie and token:
-                headers['Cookie'] = f'token={token}'
-            else:
-                headers['Authorization'] = 'Basic YWRtaW46cGFzc3dvcmQxMjM='
-            response = self.session.delete(url, headers=headers)
+            if token:
+                headers['Authorization'] = f'Bearer {token}'
+
+            response = self.session.delete(url, headers=headers or None)
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 201, f"Expected status 201 but got {response.status_code}"
@@ -99,7 +109,7 @@ class APIClient:
             response = self.session.post(url, json=booking_data)
             response.raise_for_status()
         with allure.step('Checking status code'):
-            assert response.status_code == 200, f"Expected status 201 but got {response.status_code}"
+            assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
         return response.json()
 
     def get_booking(self, params=None):
@@ -131,6 +141,18 @@ class APIClient:
         with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
         return response.json()
+
+if __name__ == "__main__":
+    from core.settings.config import Users
+
+    client = APIClient()
+    client.auth()
+    booking_id = 1
+    result = client.delete_booking(booking_id)
+    if result:
+        print(f"Booking with ID {booking_id} was successfully deleted.")
+    else:
+        print(f"Failed to delete booking with ID {booking_id}.")
 
 
 
