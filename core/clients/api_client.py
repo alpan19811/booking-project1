@@ -59,9 +59,7 @@ class APIClient:
         with allure.step('Getting authenticate'):
             url = f"{self.base_url}/{Endpoints.AUTH_ENDPOINT.value}"
             payload = {"username": Users.USERNAME.value, "password": Users.PASSWORD.value}
-
             timeout_value = Timeouts.TIMEOUT.value
-
             response = self.session.post(url, json=payload, timeout=timeout_value)
             response.raise_for_status()
 
@@ -73,7 +71,6 @@ class APIClient:
             raise ValueError("Authentication failed: token not received")
 
         self.session.headers.update({"Authorization": f"Bearer {token}"})
-        print(f"Token for authorization: {token}")
 
     def get_booking_by_id(self, booking_id):
         with allure.step(f'Getting booking with ID {booking_id}'):
@@ -97,7 +94,7 @@ class APIClient:
             if token:
                 headers['Authorization'] = f'Bearer {token}'
 
-            response = self.session.delete(url, headers=headers or None)
+            response = self.session.delete(url, headers=headers)
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 201, f"Expected status 201 but got {response.status_code}"
@@ -118,9 +115,8 @@ class APIClient:
             response = self.session.get(url, params=params)
             response.raise_for_status()
         with allure.step('Checking status code'):
-            assert response.status_code == 200, f"Expected status 201 but got {response.status_code}"
+            assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
         return response.json()
-
 
     def update_booking(self, booking_id, booking_data):
         with allure.step(f'Updating booking with ID {booking_id}'):
@@ -132,28 +128,13 @@ class APIClient:
         with allure.step('Returning updated booking data'):
             return response.json()
 
-
     def partial_update_booking(self, booking_id, booking_data):
         with allure.step(f'Partially updating booking with ID {booking_id}'):
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}/{booking_id}"
-            response = self.session.patch(url, json=booking_data, auth=HTTPBasicAuth(Users.USERNAME, Users.PASSWORD))
+            response = self.session.patch(url, json=booking_data, auth=HTTPBasicAuth(Users.USERNAME.value, Users.PASSWORD.value))
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
-        return response.json()
-
-if __name__ == "__main__":
-    from core.settings.config import Users
-
-    client = APIClient()
-    client.auth()
-    booking_id = 1
-    result = client.delete_booking(booking_id)
-    if result:
-        print(f"Booking with ID {booking_id} was successfully deleted.")
-    else:
-        print(f"Failed to delete booking with ID {booking_id}.")
-
-
+        return response.json
 
 
