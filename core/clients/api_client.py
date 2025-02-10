@@ -84,18 +84,12 @@ class APIClient:
         with allure.step('Returning booking data'):
             return response.json()
 
-    def delete_booking(self, booking_id, token=None):
+    def delete_booking(self, booking_id):
         with allure.step('Deleting booking'):
             url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT.value}/{booking_id}"
-
-            print(f"Token for authorization: {token}")
-
-            headers = {}
-            if token:
-                headers['Authorization'] = f'Bearer {token}'
-
-            response = self.session.delete(url, headers=headers)
+            response = self.session.delete(url, auth=HTTPBasicAuth(Users.USERNAME.value, Users.PASSWORD.value))
             response.raise_for_status()
+
         with allure.step('Checking status code'):
             assert response.status_code == 201, f"Expected status 201 but got {response.status_code}"
         return response.status_code == 201
