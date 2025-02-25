@@ -12,8 +12,8 @@ def api_client():
 @pytest.fixture
 def booking_dates():
     today = datetime.today()
-    checkin_date = today = timedelta(days=10)
-    checkout_date = checkin_date = timedelta(days=5)
+    checkin_date = today + timedelta(days=10)
+    checkout_date = checkin_date + timedelta(days=5)
 
     return {
         "checkin": checkin_date.strftime('%Y-%m-%d'),
@@ -25,7 +25,7 @@ def generate_random_booking_data(booking_dates):
     faker = Faker()
     firstname = faker.first_name()
     lastname = faker.last_name()
-    totalprice = faker.randome_number(digits=3)
+    totalprice = faker.random_number(digits=3)
     depositpaid = faker.boolean()
     additionalneeds = faker.sentence()
 
