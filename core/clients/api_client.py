@@ -48,7 +48,7 @@ class APIClient:
 
     def ping(self):
         with allure.step('Ping api client'):
-            url = f"{self.base_url}/{Endpoints.PING_ENDPOINT}"
+            url = f"{self.base_url}/{Endpoints.PING_ENDPOINT.value}"
             response = self.session.get(url)
             response.raise_for_status()
         with allure.step('Assert status code'):
@@ -96,12 +96,12 @@ class APIClient:
 
     def create_booking(self, booking_data):
         with allure.step('Creating booking'):
-            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT}"
+            url = f"{self.base_url}{Endpoints.BOOKING_ENDPOINT.value}"
             response = self.session.post(url, json=booking_data)
             response.raise_for_status()
         with allure.step('Checking status code'):
             assert response.status_code == 200, f"Expected status 200 but got {response.status_code}"
-        return response.json()
+        return response
 
     def get_booking(self, params=None):
         with allure.step('Getting object with bookings'):
