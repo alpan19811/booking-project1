@@ -105,8 +105,8 @@ def test_create_booking_invalid_data(api_client):
         "additionalneeds": "Breakfast"
     }
 
-with allure.step('Send POST request with invalid data'):
-    response = api_client.create_booking(booking_data)
+    with allure.step('Send POST request with invalid data'):
+        response = api_client.create_booking(booking_data)
 
-with allure.step('Check response status code'):
-    assert response.status_code == 400, f"Expected status 400 but got {response.status_code}"
+    with allure.step('Check response status code'):
+        assert response.status_code == 400, f"Expected status 200 but got {response.status_code}"
