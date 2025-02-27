@@ -110,3 +110,54 @@ def test_create_booking_invalid_data(api_client):
 
     with allure.step('Check response status code'):
         assert response.status_code == 400, f"Expected status 200 but got {response.status_code}"
+
+
+@allure.feature('Create booking')
+@allure.story('Create booking with server error')
+def test_create_booking_server_error(api_client, mocker):
+    booking_data = {
+        "firstname": "",
+        "lastname": "Doe",
+        "totalprice": 100,
+        "depositpaid": True,
+        "bookingdates": {
+            "checkin": "2023-10-01",
+            "checkout": "2023-10-05"
+        },
+        "additionalneeds": "Breakfast"
+    }
+    mock_response = mocker.Mock()
+    mock_response.status_code = 500
+    mocker.patch.object(api_client.session, 'post', return_value=mock_response)
+
+    with allure.step('Send POST request with server error'):
+        response = api_client.create_booking(booking_data)
+
+    with allure.step('Check response status code'):
+        assert response.status_code == 500, f"Expected status 500 but got {response.status_code}"
+
+
+@allure.feature('Create booking')
+@allure.story('Create booking with timeout')
+def test_create_booking_timeout(api_client, mocker):
+    booking_data = {
+        "firstname": "",
+        "lastname": "Doe",
+        "totalprice": 100,
+        "depositpaid": True,
+        "bookingdates": {
+            "checkin": "2023-10-01",
+            "checkout": "2023-10-05"
+        },
+        "additionalneeds": "Breakfast"
+    }
+    mocker.patch.object(api_client.session, 'post', side_effect=requests.Timeout)
+
+    with allure.step('Send POST request with timeout'):
+        with pytest.raises(requests.Timeout):
+            api_client.create_booking(booking_data)
+
+
+
+
+
